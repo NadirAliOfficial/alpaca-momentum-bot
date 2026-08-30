@@ -1,5 +1,4 @@
 from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.data.historical.option import OptionHistoricalDataClient
 from alpaca.trading.client import TradingClient
 
 from .config import Config
@@ -22,10 +21,7 @@ class AlpacaClient:
             secret_key=config.api_secret,
             paper=config.is_paper,
         )
-        self.stock_data = StockHistoricalDataClient(
-            api_key=config.api_key, secret_key=config.api_secret
-        )
-        self.option_data = OptionHistoricalDataClient(
+        self.market_data = StockHistoricalDataClient(
             api_key=config.api_key, secret_key=config.api_secret
         )
 
