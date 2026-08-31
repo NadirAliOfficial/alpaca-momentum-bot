@@ -1,6 +1,8 @@
 from .alpaca_client import AlpacaClient
+from .bars import get_bars
 from .config import ConfigError, load_config
 from .logger import get_logger
+from .signals import evaluate_entry
 
 
 def main() -> int:
@@ -25,7 +27,19 @@ def main() -> int:
     log.info("Market open: %s | next open: %s | next close: %s",
              clock.is_open, clock.next_open, clock.next_close)
 
-    log.info("M1 environment check complete. Account equity: %s", account.equity)
+    log.info("Account equity: %s", account.equity)
+
+    for symbol in config.watchlist:
+        df = get_bars(client, symbol, hours=config.bar_timeframe_hours)
+        if df.empty:
+            log.warning("%s | no bar data returned", symbol)
+            continue
+        sig = evaluate_entry(df, symbol)
+        log.info(
+            "%s | bars=%d last_close=%.2f | signal=%s (%s)",
+            symbol, len(df), sig.price, sig.type.value, sig.reason,
+        )
+
     return 0
 
 
