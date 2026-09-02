@@ -35,6 +35,8 @@ class Config:
     watchlist: list[str] = field(default_factory=list)
     bar_timeframe_hours: int = 4
     risk_per_trade: float = 0.01
+    stop_atr_mult: float = 1.5
+    reward_risk: float = 2.5
     log_level: str = "INFO"
 
     @property
@@ -54,6 +56,10 @@ class Config:
             raise ConfigError("BAR_TIMEFRAME_HOURS must be positive.")
         if not 0 < self.risk_per_trade < 1:
             raise ConfigError("RISK_PER_TRADE must be between 0 and 1.")
+        if self.stop_atr_mult <= 0:
+            raise ConfigError("STOP_ATR_MULT must be positive.")
+        if self.reward_risk <= 0:
+            raise ConfigError("REWARD_RISK must be positive.")
 
 
 def load_config() -> Config:
@@ -64,6 +70,8 @@ def load_config() -> Config:
         watchlist=_get_list("WATCHLIST", ["SPY"]),
         bar_timeframe_hours=int(os.getenv("BAR_TIMEFRAME_HOURS", "4")),
         risk_per_trade=float(os.getenv("RISK_PER_TRADE", "0.01")),
+        stop_atr_mult=float(os.getenv("STOP_ATR_MULT", "1.5")),
+        reward_risk=float(os.getenv("REWARD_RISK", "2.5")),
         log_level=os.getenv("LOG_LEVEL", "INFO").upper(),
     )
     cfg.validate()

@@ -28,6 +28,10 @@ def true_range(df: pd.DataFrame) -> pd.Series:
     ).max(axis=1)
 
 
+def atr(df: pd.DataFrame, length: int = KC_ATR_LENGTH) -> pd.Series:
+    return sma(true_range(df), length)
+
+
 def keltner_channels(
     df: pd.DataFrame,
     length: int = KC_LENGTH,

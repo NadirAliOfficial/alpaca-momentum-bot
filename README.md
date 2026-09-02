@@ -1,10 +1,11 @@
 # Alpaca Momentum Bot
 
 Automated trading bot for a 4-hour momentum-breakout strategy
-(Keltner Channels + MFI + OBV) on the Alpaca API, with ATM weekly
-contract selection and a two-stage position-splitting exit matrix.
+(Keltner Channels + MFI + OBV) on the Alpaca API, with 1% equity risk
+sizing and a two-stage position-splitting exit. Long spot positions
+only — no options, shorting, or margin.
 
-This repository is delivered in milestones. **Current: Milestone 2.**
+This repository is delivered in milestones. **Current: Milestone 3.**
 
 ## Milestone 1 — Environment, Alpaca integration, safety flag
 
@@ -32,8 +33,26 @@ This repository is delivered in milestones. **Current: Milestone 2.**
 - 12 new unit tests: indicator correctness plus long / short / no-signal
   and guard cases for the entry rules.
 
-Later milestones add the risk engine with the two-stage exit and live
-contract-chain execution.
+## Milestone 3 — Risk engine and two-stage exit (simulated)
+
+- `src/risk.py` — `size_position()` caps loss at `RISK_PER_TRADE` (1%)
+  of equity given entry and an ATR-based stop; quantity is floored to an
+  even lot (min 2) so the scale-out is whole. `atr_stop()` places the
+  stop at `STOP_ATR_MULT` x ATR(20) below entry; target is
+  `REWARD_RISK` x the per-share risk.
+- `src/simulator.py` — `simulate_trade()` walks the bars after entry:
+  - **Phase 1**: full position, hard stop + profit target. On the target
+    it sells 50% and moves the stop on the runner to breakeven.
+  - **Phase 2 (runner)**: exits on the breakeven stop, a 4h close back
+    past the Keltner middle, OBV crossing below its SMA, or the Friday
+    3:30pm New York cutoff.
+  - Returns fills + realised PnL and R multiple. Stop fills before target
+    within a bar.
+- `python -m src.main` logs the sized plan for any LONG signal.
+- 11 new unit tests: sizing math and every exit path.
+
+All execution here is simulated on price data. Live spot order routing
+and deployment come in Milestone 4.
 
 ## Setup
 

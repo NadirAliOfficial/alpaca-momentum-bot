@@ -1,8 +1,10 @@
 from .alpaca_client import AlpacaClient
 from .bars import get_bars
 from .config import ConfigError, load_config
+from .indicators import atr
 from .logger import get_logger
-from .signals import evaluate_entry
+from .risk import atr_stop, size_position
+from .signals import SignalType, evaluate_entry
 
 
 def main() -> int:
@@ -39,6 +41,27 @@ def main() -> int:
             "%s | bars=%d last_close=%.2f | signal=%s (%s)",
             symbol, len(df), sig.price, sig.type.value, sig.reason,
         )
+
+        if sig.type is SignalType.LONG:
+            atr_value = float(atr(df).iloc[-1])
+            stop = atr_stop(sig.price, atr_value, config.stop_atr_mult)
+            plan = size_position(
+                equity=float(account.equity),
+                risk_per_trade=config.risk_per_trade,
+                entry=sig.price,
+                stop=stop,
+                reward_risk=config.reward_risk,
+                symbol=symbol,
+            )
+            if plan.tradeable:
+                log.info(
+                    "%s | PLAN (simulated) qty=%d entry=%.2f stop=%.2f target=%.2f "
+                    "risk=$%.2f R:R=%.1f",
+                    symbol, plan.quantity, plan.entry, plan.stop, plan.target,
+                    plan.total_risk, plan.reward_risk,
+                )
+            else:
+                log.info("%s | risk budget too small for a 2-share position", symbol)
 
     return 0
 
